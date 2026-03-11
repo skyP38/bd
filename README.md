@@ -1,5 +1,5 @@
 # bd
-BR_RM.pdf - список бизнес правил + матрица связей
+BR_RM.pdf - список бизнес правил + матрица связей  
 queries.sql - условия+запросы+вывод
 
 ## Создать таблицы:
@@ -7,20 +7,22 @@ queries.sql - условия+запросы+вывод
 psql -U myuser -d mydb -f create_tables.sql
 ```
 
-## (Опционально) Наполнить начальными данными вручную:
+## Наполнить начальными данными вручную:
 ```bash
 psql -U myuser -d mydb -f insert_test_data.sql
 ```
-## Или сгенерировать тестовые данные через Python:
+## Или сгенерировать тестовые данные через Python(неполная версия):
+```
 nix-shell -p python3 python3Packages.psycopg2 python3Packages.faker 
+```
 
 ```bash
 python test_data.py
 ```
 ## Проверить наличие данных:
 ```sql
-    SELECT * FROM debtor;
-    SELECT COUNT(*) FROM contract;
+SELECT * FROM debtor;
+SELECT COUNT(*) FROM contract;
 ```
 
 ## Подключиться к БД
