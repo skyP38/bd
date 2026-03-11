@@ -22,7 +22,7 @@ CREATE TABLE service_price (
 CREATE TABLE department (
     department_id   SERIAL PRIMARY KEY,
     address         TEXT NOT NULL,
-    phone           VARCHAR(11) NOT NULL,
+    phone           VARCHAR(11) UNIQUE,
     additional_info TEXT
 );
 
@@ -59,7 +59,7 @@ CREATE TABLE employee_price (
 -- Таблица клиентов (E2)
 CREATE TABLE client (
     client_id       SERIAL PRIMARY KEY,
-    client_name     TEXT NOT NULL,
+    client_name     TEXT UNIQUE,
     phone           VARCHAR(11) NOT NULL,
     address         TEXT NOT NULL,
     inn             VARCHAR(12) UNIQUE NOT NULL, 
@@ -76,7 +76,8 @@ CREATE TABLE collector_service (
 CREATE TABLE stimulating_activity (
     activity_id     SERIAL PRIMARY KEY,
     activity_date   DATE NOT NULL,
-    manager_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT
+    manager_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
+    debtor_id        INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE RESTRICT
 );
 
 -- Таблица услуг как мероприятий
@@ -99,8 +100,10 @@ CREATE TABLE contract (
     contract_number  VARCHAR(20) PRIMARY KEY,
     debt_amount      REAL NOT NULL CHECK(debt_amount > 0),
     agency_fee_pct   REAL NOT NULL CHECK(agency_fee_pct >= 0),
+    date             DATE NOT NULL,
     resp_manager_id  INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
-    debtor_id        INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE RESTRICT
+    debtor_id        INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE RESTRICT,
+    client_id        INTEGER NOT NULL REFERENCES client(client_id) ON DELETE RESTRICT
 );
 
 -- Таблица ВПД (E6)
@@ -118,9 +121,8 @@ CREATE TABLE outgoing_payment_document (
     doc_type         VARCHAR(30) NOT NULL,
     rec_client_id    INTEGER REFERENCES client(client_id) ON DELETE RESTRICT,
     rec_employee_id  INTEGER REFERENCES employee(employee_id) ON DELETE RESTRICT,
-    date             DATE NOT NULL,
+    payment_date     DATE NOT NULL,
     amount           REAL NOT NULL CHECK(amount > 0),
-    base_doc         VARCHAR(5), 
     accountant_id    INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
     contract_number  VARCHAR(20) NOT NULL REFERENCES contract(contract_number) ON DELETE RESTRICT
     CONSTRAINT check_recipient_type CHECK (
@@ -136,7 +138,7 @@ CREATE TABLE payment_plan (
     amount           REAL NOT NULL CHECK(amount > 0),
     penalty_flag     BOOLEAN DEFAULT FALSE,
     payment_doc_id   INTEGER REFERENCES incoming_payment_document(doc_id) ON DELETE SET NULL,
-    paid_flag        BOOLEAN DEFAULT FALSE,
+    paid_flag        BOOLEAN NOT NULL DEFAULT FALSE,
     employee_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT
 );
 
@@ -146,4 +148,28 @@ CREATE TABLE employee_ipd (
     employee_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
     PRIMARY KEY (ipd_doc_id, employee_id)
 );
-            
+
+-- Таблица с детальным планом
+CREATE TABLE plan_detailed (
+    contract_number  VARCHAR(20) REFERENCES payment_plan(contract_number) ON DELETE RESTRICT,
+    plan_step        VARCHAR(5) NOT NULL,
+    date             DATE NOT NULL,
+    PRIMARY KEY (contract_number, plan_step)
+);
+
+-- Таблица с оплатой долга
+CREATE TABLE debt_payment (
+    contract_number  VARCHAR(20) NOT NULL,
+    plan_step        VARCHAR(5) NOT NULL,
+    ipd              INTEGER REFERENCES outgoing_payment_document(doc_id) ON DELETE RESTRICT,
+    PRIMARY KEY (contract_number, plan_step, ipd),
+    FOREIGN KEY (contract_number, plan_step) REFERENCES plan_detailed(contract_number, plan_step) ON DELETE RESTRICT
+);
+
+-- Таблица стоимостей услуг коллекторов
+CREATE TABLE collector_price (
+    service_code SMALLINT REFERENCES service_price(service_code),
+    service_name TEXT REFERENCES collector_service(service_name),
+    PRIMARY KEY (service_code, service_name)
+);
+
