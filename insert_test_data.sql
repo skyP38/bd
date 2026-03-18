@@ -59,9 +59,9 @@ INSERT INTO collector_service (service_name, description) VALUES
 
 -- Стимулирующие мероприятий
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id) VALUES
-('2026-01-12', 3, 1),
-('2026-02-20', 2, 2),
-('2026-03-15', 3, 1);
+('2026-01-12 09:15:00', 3, 1),
+('2026-02-20 14:30:00', 2, 2),
+('2026-03-15 11:45:00', 3, 1);
 
 -- Услуги как мероприятия
 INSERT INTO activity_service (activity_id, service_name, success_flag) VALUES
@@ -98,22 +98,22 @@ INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id,
 
 
 -- Планы выплат
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-001', '2025-06-10', 50000.00, FALSE, 1, TRUE, 3),
-('Д-002', '2025-08-15', 30000.00, FALSE, 3, TRUE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-001', '2025-06-10', FALSE, TRUE, 3), -- 1
+('Д-002', '2025-08-15', FALSE, TRUE, 3); -- 3
 
+
+-- Детальный план выплат
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-001', '01', 20000.00, '2025-06-10', 1),
+('Д-001', '02', 30000.00, '2025-07-20', NULL),
+('Д-002', '01', 30000.00, '2025-08-15', 3);
 
 -- Связь сотрудников с входящими документами
 INSERT INTO employee_ipd (ipd_doc_id, employee_id) VALUES
 (1, 4),
 (2, 4),
 (3, 4);
-
--- Детальный план выплат
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-001', '01', '2025-06-10'),
-('Д-001', '02', '2025-07-20'),
-('Д-002', '01', '2025-08-15');
 
 -- Связь детального плана с исходящими платежными документами
 INSERT INTO debt_payment (contract_number, plan_step, ipd) VALUES
@@ -133,8 +133,8 @@ INSERT INTO collector_price (service_code, service_name) VALUES
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
 VALUES ('Д-003', 100000.00, 10.0, '2025-05-15', 3, 1, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-003', '2025-06-15', 100000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-003', '2025-06-15', FALSE, FALSE, 3);
 
 -- Входящие платежи по Д-003
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number)
@@ -146,12 +146,16 @@ INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id,
 VALUES ('to_client', 1, NULL, '2025-08-15', 27000.00, 4, 'Д-003'),
        ('to_employee', NULL, 2, '2025-12-10', 5000.00, 4, 'Д-003');
 
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-003', '01', 100000.00, '2025-06-15', NULL);
+
+
 -- Договор Д-004 (заключен внутри периода, оплачен в том же месяце)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
 VALUES ('Д-004', 50000.00, 15.0, '2025-09-10', 3, 2, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-004', '2025-09-10', 50000.00, FALSE, NULL, TRUE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-004', '2025-09-10', FALSE, TRUE, 3);
 
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number)
 VALUES (50000.00, '2025-09-25', 4, 'Д-004');
@@ -159,19 +163,27 @@ VALUES (50000.00, '2025-09-25', 4, 'Д-004');
 INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id, payment_date, amount, accountant_id, contract_number)
 VALUES ('to_client', 2, NULL, '2025-09-30', 42500.00, 4, 'Д-004');
 
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-004', '01', 50000.00, '2025-09-10', NULL);
+
+
 -- Договор Д-005 (заключен в 2026, без платежей)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
 VALUES ('Д-005', 200000.00, 12.0, '2026-01-20', 3, 1, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-005', '2026-01-20', 200000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-005', '2026-01-20', FALSE, FALSE, 3);
+
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-005', '01', 200000.00, '2026-01-20', NULL);
+
 
 -- Договор Д-006 (заключен в 2025, частично оплачен, платежи в ноябре и феврале)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
 VALUES ('Д-006', 30000.00, 10.0, '2025-11-01', 3, 2, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-006', '2025-11-01', 30000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-006', '2025-11-01', FALSE, FALSE, 3);
 
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number)
 VALUES (10000.00, '2025-11-15', 4, 'Д-006'),
@@ -181,12 +193,17 @@ INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id,
 VALUES ('to_client', 2, NULL, '2025-11-20', 9000.00, 4, 'Д-006'),
        ('to_client', 2, NULL, '2026-02-15', 13500.00, 4, 'Д-006');
 
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-006', '01', 30000.00, '2025-11-01', NULL);
+
+
+
 -- Договор Д-007 (заключен в июле 2025, несколько платежей)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
 VALUES ('Д-007', 80000.00, 8.0, '2025-07-25', 3, 2, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-007', '2025-07-25', 80000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-007', '2025-07-25', FALSE, FALSE, 3);
 
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number)
 VALUES (20000.00, '2025-07-30', 4, 'Д-007'),
@@ -198,6 +215,8 @@ VALUES ('to_client', 1, NULL, '2025-08-05', 18400.00, 4, 'Д-007'),
        ('to_client', 1, NULL, '2025-09-05', 27600.00, 4, 'Д-007'),
        ('to_client', 1, NULL, '2025-10-05', 18400.00, 4, 'Д-007');
 
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-007', '01', 80000.00, '2025-07-25', NULL);
 
 -- Новый должник для проверки запроса №4
 INSERT INTO debtor (full_name, passport_series, passport_number, phone, contact_phone, address)
@@ -210,22 +229,10 @@ VALUES
 ('Д-009', 90000.00, 12.0, '2025-02-15', 3, (SELECT debtor_id FROM debtor WHERE full_name='Петров Петр Петрович'), 2);
 
 -- Планы выплат
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
 VALUES
-('Д-008', '2025-01-10', 60000.00, FALSE, NULL, FALSE, 3),
-('Д-009', '2025-02-15', 90000.00, FALSE, NULL, FALSE, 3);
-
--- Детальный план (шаги) для Д-008 (3 шага, все даты в прошлом)
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-008', '01', '2025-02-01'),
-('Д-008', '02', '2025-03-01'),
-('Д-008', '03', '2025-04-01');
-
--- Детальный план для Д-009 (3 шага, все даты в прошлом)
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-009', '01', '2025-03-15'),
-('Д-009', '02', '2025-04-15'),
-('Д-009', '03', '2025-05-15');
+('Д-008', '2025-01-10', FALSE, FALSE, 3),
+('Д-009', '2025-02-15', FALSE, FALSE, 3);
 
 -- Входящий платёж по Д-008 (частичная оплата)
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number)
@@ -234,6 +241,18 @@ VALUES (20000.00, '2025-02-10', 4, 'Д-008');
 -- Исходящий платёж (перечисление клиенту) для первого шага Д-008
 INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id, payment_date, amount, accountant_id, contract_number)
 VALUES ('to_client', 1, NULL, '2025-02-15', 18000.00, 4, 'Д-008');
+
+-- Детальный план для Д-008
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-008', '01', 20000.00, '2025-02-01', NULL),
+('Д-008', '02', 20000.00, '2025-03-01', NULL),
+('Д-008', '03', 20000.00, '2025-04-01', NULL);
+
+-- Детальный план для Д-009
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-009', '01', 30000.00, '2025-03-15', NULL),
+('Д-009', '02', 30000.00, '2025-04-15', NULL),
+('Д-009', '03', 30000.00, '2025-05-15', NULL);
 
 -- Связываем исходящий платёж с первым шагом (делаем шаг оплаченным)
 INSERT INTO debt_payment (contract_number, plan_step, ipd)
@@ -247,12 +266,12 @@ INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_m
 VALUES
 ('Д-010', 30000.00, 10.0, '2025-03-01', 3, (SELECT debtor_id FROM debtor WHERE full_name='Сидорова Мария'), 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-010', '2025-03-01', 30000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-010', '2025-03-01', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-010', '01', '2025-03-10'),
-('Д-010', '02', '2025-04-10');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-010', '01', 15000.00, '2025-03-10', NULL),
+('Д-010', '02', 15000.00, '2025-04-10', NULL);
 
 
 -- Дополнительные данные для выполнения требований (>7 строк в каждом запросе и наличие неподходящих записей)
@@ -313,16 +332,16 @@ INSERT INTO collector_price (service_code, service_name) VALUES
 -- ==================== Стимулирующие мероприятия (stimulating_activity) ====================
 -- Создаём 10 мероприятий с разными датами (в прошлом и текущем/будущем)
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id) VALUES
-('2025-08-15', 2, 3),   -- мероприятие 4
-('2025-09-10', 3, 4),   -- 5
-('2025-10-05', 2, 5),   -- 6
-('2025-11-20', 3, 6),   -- 7
-('2025-12-01', 2, 7),   -- 8
-('2026-01-12', 3, 8),   -- 9
-('2026-02-18', 2, 9),   -- 10
-('2026-03-05', 3, 10),  -- 11
-('2026-03-10', 2, 1),   -- 12
-('2026-03-15', 3, 2);   -- 13
+('2025-08-15 10:00:00', 2, 3),   -- мероприятие 4
+('2025-09-10 11:30:00', 3, 4),   -- 5
+('2025-10-05 09:45:00', 2, 5),   -- 6
+('2025-11-20 14:15:00', 3, 6),   -- 7
+('2025-12-01 16:20:00', 2, 7),   -- 8
+('2026-01-12 13:10:00', 3, 8),   -- 9
+('2026-02-18 08:30:00', 2, 9),   -- 10
+('2026-03-05 15:45:00', 3, 10),  -- 11
+('2026-03-10 12:00:00', 2, 1),   -- 12
+('2026-03-15 17:30:00', 3, 2);   -- 13
 
 -- Услуги для мероприятий (activity_service)
 -- Каждому мероприятию добавим от 1 до 3 услуг с разными success_flag
@@ -348,8 +367,8 @@ INSERT INTO activity_service (activity_id, service_name, success_flag) VALUES
 
 -- Добавим несколько мероприятий без услуг (не попадут в запрос 2)
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id) VALUES
-('2026-03-20', 2, 5),
-('2026-03-21', 3, 6);
+('2026-03-20 10:15:00', 2, 5),
+('2026-03-21 15:45:00', 3, 6);
 
 -- ==================== Договоры (contract) для новых должников ====================
 -- Для должников с ID 3..10 создадим договоры, чтобы у некоторых было >3 просрочек
@@ -360,22 +379,20 @@ INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_m
 ('Д-101', 60000.00, 12.0, '2025-02-15', 3, 3, 2);
 
 -- Планы выплат
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-100', '2025-01-20', 50000.00, FALSE, NULL, FALSE, 3),
-('Д-101', '2025-02-15', 60000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-100', '2025-01-20', FALSE, FALSE, 3),
+('Д-101', '2025-02-15', FALSE, FALSE, 3);
 
--- Детальный план для Д-100 (4 шага, все даты в прошлом)
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-100', '01', '2025-02-20'),
-('Д-100', '02', '2025-03-20'),
-('Д-100', '03', '2025-04-20'),
-('Д-100', '04', '2025-05-20');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-100', '01', 12500.00, '2025-02-20', NULL),
+('Д-100', '02', 12500.00, '2025-03-20', NULL),
+('Д-100', '03', 12500.00, '2025-04-20', NULL),
+('Д-100', '04', 12500.00, '2025-05-20', NULL);
 
--- Детальный план для Д-101 (3 шага, все даты в прошлом)
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-101', '01', '2025-03-15'),
-('Д-101', '02', '2025-04-15'),
-('Д-101', '03', '2025-05-15');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-101', '01', 20000.00, '2025-03-15', NULL),
+('Д-101', '02', 20000.00, '2025-04-15', NULL),
+('Д-101', '03', 20000.00, '2025-05-15', NULL);
 
 -- Оплачен один шаг в Д-100 (чтобы был paid шаг)
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number) VALUES
@@ -391,27 +408,27 @@ INSERT INTO debt_payment (contract_number, plan_step, ipd) VALUES
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-102', 40000.00, 15.0, '2025-03-10', 3, 4, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-102', '2025-03-10', 40000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-102', '2025-03-10', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-102', '01', '2025-04-10'),
-('Д-102', '02', '2025-05-10'),
-('Д-102', '03', '2025-06-10'),
-('Д-102', '04', '2025-07-10'),
-('Д-102', '05', '2025-08-10'); -- 5 шагов, все не оплачены -> 5 просрочек
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-102', '01', 8000.00, '2025-04-10', NULL),
+('Д-102', '02', 8000.00, '2025-05-10', NULL),
+('Д-102', '03', 8000.00, '2025-06-10', NULL),
+('Д-102', '04', 8000.00, '2025-07-10', NULL),
+('Д-102', '05', 8000.00, '2025-08-10', NULL); -- 5 шагов, все не оплачены -> 5 просрочек
 
 -- Должник 5 (Сидоров Сидор) – сделаем 2 просрочки (не попадает)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-103', 30000.00, 10.0, '2025-04-05', 3, 5, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-103', '2025-04-05', 30000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-103', '2025-04-05', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-103', '01', '2025-05-05'),
-('Д-103', '02', '2025-06-05'),
-('Д-103', '03', '2025-07-05'); -- 3 шага, но некоторые могут быть оплачены
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-103', '01', 10000.00, '2025-05-05', NULL),
+('Д-103', '02', 10000.00, '2025-06-05', NULL),
+('Д-103', '03', 10000.00, '2025-07-05', NULL); -- 3 шага, но некоторые могут быть оплачены
 -- Оплатим два, останется 1 просрочка (не >3)
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number) VALUES
 (10000.00, '2025-05-10', 4, 'Д-103'),
@@ -428,26 +445,26 @@ INSERT INTO debt_payment (contract_number, plan_step, ipd) VALUES
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-104', 20000.00, 10.0, '2025-05-20', 3, 6, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-104', '2025-05-20', 20000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-104', '2025-05-20', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-104', '01', '2025-06-20'),
-('Д-104', '02', '2025-07-20'),
-('Д-104', '03', '2025-08-20'),
-('Д-104', '04', '2025-09-20'); -- 4 шага, не оплачены -> 4 просрочки
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-104', '01', 5000.00, '2025-06-20', NULL),
+('Д-104', '02', 5000.00, '2025-07-20', NULL),
+('Д-104', '03', 5000.00, '2025-08-20', NULL),
+('Д-104', '04', 5000.00, '2025-09-20', NULL); -- 4 шага, не оплачены -> 4 просрочки
 
 -- Должник 7 (Смирнов Смир) – 3 просрочки (не попадает)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-105', 25000.00, 12.0, '2025-06-15', 3, 7, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-105', '2025-06-15', 25000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-105', '2025-06-15', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-105', '01', '2025-07-15'),
-('Д-105', '02', '2025-08-15'),
-('Д-105', '03', '2025-09-15'); -- 3 шага, оплатим один -> 2 просрочки
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-105', '01', 8300.00, '2025-07-15', NULL),
+('Д-105', '02', 8350.00, '2025-08-15', NULL),
+('Д-105', '03', 8350.00, '2025-09-15', NULL); -- 3 шага, оплатим один -> 2 просрочки
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number) VALUES
 (8300.00, '2025-07-20', 4, 'Д-105');
 INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id, payment_date, amount, accountant_id, contract_number) VALUES
@@ -460,40 +477,40 @@ INSERT INTO debt_payment (contract_number, plan_step, ipd) VALUES
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-106', 70000.00, 15.0, '2025-07-01', 3, 8, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-106', '2025-07-01', 70000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-106', '2025-07-01', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-106', '01', '2025-08-01'),
-('Д-106', '02', '2025-09-01'),
-('Д-106', '03', '2025-10-01'),
-('Д-106', '04', '2025-11-01'),
-('Д-106', '05', '2025-12-01'); -- 5 шагов, не оплачены -> 5 просрочек
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-106', '01', 14000.00, '2025-08-01', NULL),
+('Д-106', '02', 14000.00, '2025-09-01', NULL),
+('Д-106', '03', 14000.00, '2025-10-01', NULL),
+('Д-106', '04', 14000.00, '2025-11-01', NULL),
+('Д-106', '05', 14000.00, '2025-12-01', NULL); -- 5 шагов, не оплачены -> 5 просрочек
 
 -- Должник 9 (Лебедев Лебедь) – 4 просрочки
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-107', 45000.00, 10.0, '2025-08-10', 3, 9, 1);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-107', '2025-08-10', 45000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-107', '2025-08-10', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-107', '01', '2025-09-10'),
-('Д-107', '02', '2025-10-10'),
-('Д-107', '03', '2025-11-10'),
-('Д-107', '04', '2025-12-10'); -- 4 шага, не оплачены -> 4 просрочки
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-107', '01', 11250.00, '2025-09-10', NULL),
+('Д-107', '02', 11250.00, '2025-10-10', NULL),
+('Д-107', '03', 11250.00, '2025-11-10', NULL),
+('Д-107', '04', 11250.00, '2025-12-10', NULL); -- 4 шага, не оплачены -> 4 просрочки
 
 -- Должник 10 (Соколов Сокол) – 3 просрочки (не попадает)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id) VALUES
 ('Д-108', 35000.00, 12.0, '2025-09-05', 3, 10, 2);
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id) VALUES
-('Д-108', '2025-09-05', 35000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id) VALUES
+('Д-108', '2025-09-05', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES
-('Д-108', '01', '2025-10-05'),
-('Д-108', '02', '2025-11-05'),
-('Д-108', '03', '2025-12-05'); -- 3 шага, оплатим один -> 2 просрочки
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id) VALUES
+('Д-108', '01', 11600.00, '2025-10-05', NULL),
+('Д-108', '02', 11700.00, '2025-11-05', NULL),
+('Д-108', '03', 11700.00, '2025-12-05', NULL); -- 3 шага, оплатим один -> 2 просрочки
 INSERT INTO incoming_payment_document (amount, payment_date, accountant_id, contract_number) VALUES
 (11600.00, '2025-10-10', 4, 'Д-108');
 INSERT INTO outgoing_payment_document (doc_type, rec_client_id, rec_employee_id, payment_date, amount, accountant_id, contract_number) VALUES
@@ -541,10 +558,11 @@ VALUES ('Д-200', 120000.00, 10.5, '2025-10-01', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Иванов Иван Иванович' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ООО "Василёк"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-200', '2025-10-01', 120000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-200', '2025-10-01', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-200', '01', '2025-11-01');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-200', '01', 120000.00, '2025-11-01', NULL);
 
 -- Д-201 для ООО Одуванчик
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -552,10 +570,11 @@ VALUES ('Д-201', 85000.00, 12.0, '2025-11-15', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Петров Петр Петрович' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ООО "Одуванчик"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-201', '2025-11-15', 85000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-201', '2025-11-15', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-201', '01', '2025-12-15');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-201', '01', 85000.00, '2025-12-15', NULL);
 
 -- Д-202 для ИП Кактус
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -563,10 +582,11 @@ VALUES ('Д-202', 45000.00, 15.0, '2026-01-10', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Сидоров Сидор Сидорович' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ИП "Кактус"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-202', '2026-01-10', 45000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-202', '2026-01-10', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-202', '01', '2026-02-10');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-202', '01', 45000.00, '2026-02-10', NULL);
 
 -- Д-203 для ООО Орхидея
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -574,10 +594,11 @@ VALUES ('Д-203', 60000.00, 11.5, '2026-02-20', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Кузнецов Кузьма' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ООО "Орхидея"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-203', '2026-02-20', 60000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-203', '2026-02-20', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-203', '01', '2026-03-20');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-203', '01', 60000.00, '2026-03-20', NULL);
 
 -- Д-204 для ЗАО Фиалка (чтобы был еще один)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -585,10 +606,11 @@ VALUES ('Д-204', 95000.00, 13.0, '2026-03-05', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Смирнов Смир' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ЗАО "Фиалка"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-204', '2026-03-05', 95000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-204', '2026-03-05', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-204', '01', '2026-04-05');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-204', '01', 95000.00, '2026-04-05', NULL);
 
 -- Д-205 для ООО Ромашка-2 (чтобы был)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -596,10 +618,11 @@ VALUES ('Д-205', 70000.00, 9.5, '2026-03-08', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Попов Поп' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ООО "Ромашка-2"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-205', '2026-03-08', 70000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-205', '2026-03-08', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-205', '01', '2026-04-08');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-205', '01', 70000.00, '2026-04-08', NULL);
 
 -- Д-206 для ООО Ромашка (второй договор)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -607,10 +630,11 @@ VALUES ('Д-206', 55000.00, 10.0, '2026-02-01', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Лебедев Лебедь' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ООО "Ромашка"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-206', '2026-02-01', 55000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-206', '2026-02-01', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-206', '01', '2026-03-01');
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-206', '01', 55000.00, '2026-03-01', NULL);
 
 -- Д-207 для ЗАО Тюльпан (второй договор)
 INSERT INTO contract (contract_number, debt_amount, agency_fee_pct, date, resp_manager_id, debtor_id, client_id)
@@ -618,11 +642,11 @@ VALUES ('Д-207', 72000.00, 14.0, '2026-03-12', 3,
         (SELECT debtor_id FROM debtor WHERE full_name='Соколов Сокол' LIMIT 1),
         (SELECT client_id FROM client WHERE client_name='ЗАО "Тюльпан"'));
 
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-VALUES ('Д-207', '2026-03-12', 72000.00, FALSE, NULL, FALSE, 3);
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+VALUES ('Д-207', '2026-03-12', FALSE, FALSE, 3);
 
-INSERT INTO plan_detailed (contract_number, plan_step, date) VALUES ('Д-207', '01', '2026-04-12');
-
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+VALUES ('Д-207', '01', 72000.00, '2026-04-12', NULL);
 
 -- Дополнительные договоры для увеличения количества контрактов у клиентов
 -- и обеспечения наличия нескольких договоров на разных должников
@@ -673,15 +697,16 @@ VALUES
  (SELECT client_id FROM client WHERE client_name='ЗАО "Тюльпан"' LIMIT 1));
 
 -- Добавляем планы выплат и детальные шаги для всех новых договоров
-INSERT INTO payment_plan (contract_number, due_date, amount, penalty_flag, payment_doc_id, paid_flag, employee_id)
-SELECT contract_number, date, debt_amount, FALSE, NULL, FALSE, 3
+INSERT INTO payment_plan (contract_number, due_date, penalty_flag, paid_flag, employee_id)
+SELECT contract_number, date, FALSE, FALSE, 3
 FROM contract
-WHERE contract_number IN ('Д-300','Д-301','Д-302','Д-303','Д-304','Д-305','Д-306','Д-307','Д-308','Д-309');
+WHERE contract_number IN ('Д-300','Д-302','Д-303','Д-304','Д-305','Д-306','Д-307','Д-308','Д-309');
 
-INSERT INTO plan_detailed (contract_number, plan_step, date)
-SELECT contract_number, '01', date
+-- Детальные планы
+INSERT INTO plan_detailed (contract_number, plan_step, amount, date, payment_doc_id)
+SELECT contract_number, '01', debt_amount, date, NULL
 FROM contract
-WHERE contract_number IN ('Д-300','Д-301','Д-302','Д-303','Д-304','Д-305','Д-306','Д-307','Д-308','Д-309');
+WHERE contract_number IN ('Д-300','Д-302','Д-303','Д-304','Д-305','Д-306','Д-307','Д-308','Д-309');
 
 
 -- Добавляем применения для новых услуг коллекторов, чтобы в запросе №5 было не менее 7 строк
@@ -841,11 +866,11 @@ AND NOT EXISTS (SELECT 1 FROM activity_service WHERE activity_id = stimulating_a
 
 -- Добавим несколько мероприятий в феврале 2026 (если нужно)
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id)
-SELECT '2026-02-10', 2, debtor_id FROM debtor LIMIT 3;
+SELECT '2026-02-10'::date + random() * interval '1 day', 2, debtor_id FROM debtor LIMIT 3;
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id)
-SELECT '2026-02-15', 3, debtor_id FROM debtor LIMIT 3;
+SELECT '2026-02-15'::date + random() * interval '1 day', 3, debtor_id FROM debtor LIMIT 3;
 INSERT INTO stimulating_activity (activity_date, manager_id, debtor_id)
-SELECT '2026-02-20', 2, debtor_id FROM debtor LIMIT 3;
+SELECT '2026-02-20'::date + random() * interval '1 day', 2, debtor_id FROM debtor LIMIT 3;
 -- Добавляем дополнительные применения для "Судебный иск" в феврале 2026,
 -- чтобы увеличить значение LAG для этой услуги.
 -- Текущее количество применений в феврале: 1 (из прошлых данных).

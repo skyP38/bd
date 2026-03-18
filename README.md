@@ -38,6 +38,12 @@ psql -U myuser -d mydb
 \d table_name
 # отключиться
 \q
+# посмотреть код функции/процедуры
+\sf name
+# посмотреть все триггеры
+select tgname from pg_trigger where tgname LIKE 'check%';
+# посмотреть все процедуры
+select proname, pronamespace::regnamespace from pg_proc where prokind='p';
 ```
 
 ## Удалить все таблицы и объекты

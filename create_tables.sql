@@ -75,7 +75,7 @@ CREATE TABLE collector_service (
 -- Таблица стимулирующих мероприятий (E8)
 CREATE TABLE stimulating_activity (
     activity_id     SERIAL PRIMARY KEY,
-    activity_date   DATE NOT NULL,
+    activity_date   TIMESTAMP NOT NULL,
     manager_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
     debtor_id        INTEGER NOT NULL REFERENCES debtor(debtor_id) ON DELETE RESTRICT
 );
@@ -135,9 +135,9 @@ CREATE TABLE outgoing_payment_document (
 CREATE TABLE payment_plan (
     contract_number  VARCHAR(20) PRIMARY KEY REFERENCES contract(contract_number) ON DELETE RESTRICT,
     due_date         DATE NOT NULL,
-    amount           REAL NOT NULL CHECK(amount > 0),
+    -- amount           REAL NOT NULL CHECK(amount > 0),
     penalty_flag     BOOLEAN DEFAULT FALSE,
-    payment_doc_id   INTEGER REFERENCES incoming_payment_document(doc_id) ON DELETE SET NULL,
+    -- payment_doc_id   INTEGER REFERENCES incoming_payment_document(doc_id) ON DELETE SET NULL,
     paid_flag        BOOLEAN NOT NULL DEFAULT FALSE,
     employee_id      INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT
 );
@@ -153,7 +153,10 @@ CREATE TABLE employee_ipd (
 CREATE TABLE plan_detailed (
     contract_number  VARCHAR(20) REFERENCES payment_plan(contract_number) ON DELETE RESTRICT,
     plan_step        VARCHAR(5) NOT NULL,
-    date             DATE NOT NULL,
+    amount           REAL NOT NULL CHECK(amount > 0),
+    est_date         DATE,
+    date             DATE,
+    payment_doc_id   INTEGER REFERENCES incoming_payment_document(doc_id) ON DELETE SET NULL,
     PRIMARY KEY (contract_number, plan_step)
 );
 
@@ -173,3 +176,13 @@ CREATE TABLE collector_price (
     PRIMARY KEY (service_code, service_name)
 );
 
+
+-- Таблица для фиксации выплат коллекторам за участие в мероприятиях
+CREATE TABLE collector_payment (
+    doc_id          SERIAL PRIMARY KEY,
+    activity_id     INTEGER NOT NULL REFERENCES stimulating_activity(activity_id) ON DELETE RESTRICT,
+    employee_id     INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT,
+    amount          REAL NOT NULL CHECK(amount > 0),
+    payment_date    DATE NOT NULL,
+    accountant_id    INTEGER NOT NULL REFERENCES employee(employee_id) ON DELETE RESTRICT
+);
