@@ -1,0 +1,170 @@
+                                                                                                          QUERY PLAN                                                                                                           
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=32969450.00..32969452.50 rows=1000 width=92) (actual time=4355.580..4355.621 rows=9 loops=1)
+   Sort Key: months.month_start
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=77223 read=138, temp read=2564 written=5594
+   ->  Subquery Scan on months  (cost=0.00..32969400.17 rows=1000 width=92) (actual time=475.519..4355.538 rows=9 loops=1)
+         Buffers: shared hit=77220 read=138, temp read=2564 written=5594
+         ->  Result  (cost=0.00..45.04 rows=1000 width=4) (actual time=0.025..0.092 rows=9 loops=1)
+               ->  ProjectSet  (cost=0.00..5.04 rows=1000 width=8) (actual time=0.024..0.078 rows=9 loops=1)
+                     ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.002 rows=1 loops=1)
+         SubPlan 1
+           ->  Aggregate  (cost=9100.72..9100.73 rows=1 width=4) (actual time=190.490..190.491 rows=1 loops=9)
+                 Buffers: shared hit=18048 read=138, temp read=1112 written=2487
+                 ->  Hash Join  (cost=7519.15..9072.79 rows=5585 width=8) (actual time=171.662..188.039 rows=35691 loops=9)
+                       Hash Cond: ((pp.contract_number)::text = (cnt.contract_number)::text)
+                       Buffers: shared hit=18048 read=138, temp read=1112 written=2487
+                       ->  Index Only Scan using idx_payment_plan_unpaid on payment_plan pp  (cost=0.29..1309.58 rows=50267 width=7) (actual time=0.026..4.401 rows=50123 loops=9)
+                             Heap Fetches: 0
+                             Buffers: shared hit=1105 read=138
+                       ->  Hash  (cost=7379.98..7379.98 rows=11111 width=15) (actual time=171.594..171.594 rows=71070 loops=9)
+                             Buckets: 131072 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 4912kB
+                             Buffers: shared hit=16943, temp read=1112 written=2487
+                             ->  Hash Right Join  (cost=5994.50..7379.98 rows=11111 width=15) (actual time=104.135..161.638 rows=71070 loops=9)
+                                   Hash Cond: ((incoming_payment_document.contract_number)::text = (cnt.contract_number)::text)
+                                   Filter: ((cnt.debt_amount - COALESCE((sum(incoming_payment_document.amount)), '0'::real)) > '0'::double precision)
+                                   Rows Removed by Filter: 9225
+                                   Buffers: shared hit=16943, temp read=1112 written=2487
+                                   ->  HashAggregate  (cost=3794.42..4406.78 rows=61236 width=11) (actual time=78.805..98.743 rows=90511 loops=9)
+                                         Group Key: incoming_payment_document.contract_number
+                                         Batches: 37  Memory Usage: 8241kB  Disk Usage: 3480kB
+                                         Buffers: shared hit=8323, temp read=1112 written=2487
+                                         ->  Index Only Scan using idx_ipd on incoming_payment_document  (cost=0.42..3294.42 rows=100000 width=11) (actual time=0.031..22.378 rows=240701 loops=9)
+                                               Index Cond: (payment_date < months.month_start)
+                                               Heap Fetches: 0
+                                               Buffers: shared hit=8323
+                                   ->  Hash  (cost=1783.41..1783.41 rows=33333 width=11) (actual time=24.493..24.494 rows=80295 loops=9)
+                                         Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5088kB
+                                         Buffers: shared hit=8620
+                                         ->  Bitmap Heap Scan on contract cnt  (cost=630.75..1783.41 rows=33333 width=11) (actual time=4.359..14.569 rows=80295 loops=9)
+                                               Recheck Cond: (date < months.month_start)
+                                               Heap Blocks: exact=6624
+                                               Buffers: shared hit=8620
+                                               ->  Bitmap Index Scan on idx_contract  (cost=0.00..622.41 rows=33333 width=0) (actual time=4.276..4.276 rows=80295 loops=9)
+                                                     Index Cond: (date < months.month_start)
+                                                     Buffers: shared hit=1996
+         SubPlan 2
+           ->  Aggregate  (cost=4009.07..4009.08 rows=1 width=4) (actual time=43.780..43.781 rows=1 loops=9)
+                 Buffers: shared hit=14353
+                 ->  Hash Join  (cost=2200.07..3967.62 rows=16578 width=4) (actual time=24.110..41.423 rows=39987 loops=9)
+                       Hash Cond: ((pp_1.contract_number)::text = (cnt_1.contract_number)::text)
+                       Buffers: shared hit=14353
+                       ->  Seq Scan on payment_plan pp_1  (cost=0.00..1637.00 rows=49733 width=7) (actual time=0.011..8.334 rows=49877 loops=9)
+                             Filter: paid_flag
+                             Rows Removed by Filter: 50123
+                             Buffers: shared hit=5733
+                       ->  Hash  (cost=1783.41..1783.41 rows=33333 width=11) (actual time=23.981..23.981 rows=80295 loops=9)
+                             Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5088kB
+                             Buffers: shared hit=8620
+                             ->  Bitmap Heap Scan on contract cnt_1  (cost=630.75..1783.41 rows=33333 width=11) (actual time=4.366..14.379 rows=80295 loops=9)
+                                   Recheck Cond: (date < months.month_start)
+                                   Heap Blocks: exact=6624
+                                   Buffers: shared hit=8620
+                                   ->  Bitmap Index Scan on idx_contract  (cost=0.00..622.41 rows=33333 width=0) (actual time=4.282..4.282 rows=80295 loops=9)
+                                         Index Cond: (date < months.month_start)
+                                         Buffers: shared hit=1996
+         SubPlan 3
+           ->  Aggregate  (cost=1039.08..1039.09 rows=1 width=4) (actual time=10.814..10.814 rows=1 loops=9)
+                 Buffers: shared hit=1997
+                 ->  Index Only Scan using idx_contract on contract cnt_2  (cost=0.42..955.74 rows=33333 width=4) (actual time=0.024..6.593 rows=80295 loops=9)
+                       Index Cond: (date < months.month_start)
+                       Heap Fetches: 0
+                       Buffers: shared hit=1997
+         SubPlan 4
+           ->  Aggregate  (cost=19.68..19.69 rows=1 width=8) (actual time=0.572..0.572 rows=1 loops=9)
+                 Buffers: shared hit=127
+                 ->  Index Only Scan using idx_contract on contract  (cost=0.42..18.43 rows=500 width=0) (actual time=0.017..0.372 rows=4035 loops=9)
+                       Index Cond: ((date >= months.month_start) AND (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=127
+         SubPlan 5
+           ->  Aggregate  (cost=19.68..19.69 rows=1 width=4) (actual time=0.552..0.552 rows=1 loops=9)
+                 Buffers: shared hit=127
+                 ->  Index Only Scan using idx_contract on contract contract_1  (cost=0.42..18.43 rows=500 width=4) (actual time=0.009..0.337 rows=4035 loops=9)
+                       Index Cond: ((date >= months.month_start) AND (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=127
+         SubPlan 6
+           ->  Aggregate  (cost=58.18..58.19 rows=1 width=8) (actual time=1.756..1.756 rows=1 loops=9)
+                 Buffers: shared hit=448
+                 ->  Index Only Scan using idx_ipd on incoming_payment_document incoming_payment_document_1  (cost=0.43..54.43 rows=1500 width=0) (actual time=0.014..1.165 rows=12174 loops=9)
+                       Index Cond: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=448
+         SubPlan 7
+           ->  Aggregate  (cost=58.18..58.19 rows=1 width=4) (actual time=1.688..1.688 rows=1 loops=9)
+                 Buffers: shared hit=448
+                 ->  Index Only Scan using idx_ipd on incoming_payment_document incoming_payment_document_2  (cost=0.43..54.43 rows=1500 width=4) (actual time=0.006..1.040 rows=12174 loops=9)
+                       Index Cond: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=448
+         SubPlan 8
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=8) (actual time=11.144..11.144 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document  (cost=0.00..3084.00 rows=500 width=0) (actual time=0.010..10.931 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+         SubPlan 9
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=4) (actual time=10.775..10.775 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document outgoing_payment_document_1  (cost=0.00..3084.00 rows=500 width=4) (actual time=0.006..10.484 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+         SubPlan 10
+           ->  Aggregate  (cost=9350.73..9350.74 rows=1 width=4) (actual time=199.521..199.522 rows=1 loops=9)
+                 Buffers: shared hit=18706, temp read=1452 written=3107
+                 ->  Hash Join  (cost=7769.17..9322.80 rows=5585 width=8) (actual time=181.409..197.103 rows=37227 loops=9)
+                       Hash Cond: ((pp_2.contract_number)::text = (cnt_3.contract_number)::text)
+                       Buffers: shared hit=18706, temp read=1452 written=3107
+                       ->  Index Only Scan using idx_payment_plan_unpaid on payment_plan pp_2  (cost=0.29..1309.58 rows=50267 width=7) (actual time=0.028..4.138 rows=50123 loops=9)
+                             Heap Fetches: 0
+                             Buffers: shared hit=1243
+                       ->  Hash  (cost=7629.99..7629.99 rows=11111 width=15) (actual time=181.337..181.338 rows=74146 loops=9)
+                             Buckets: 131072 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 5022kB
+                             Buffers: shared hit=17463, temp read=1452 written=3107
+                             ->  Hash Right Join  (cost=6244.51..7629.99 rows=11111 width=15) (actual time=107.960..171.037 rows=74146 loops=9)
+                                   Hash Cond: ((incoming_payment_document_3.contract_number)::text = (cnt_3.contract_number)::text)
+                                   Filter: ((cnt_3.debt_amount - COALESCE((sum(incoming_payment_document_3.amount)), '0'::real)) > '0'::double precision)
+                                   Rows Removed by Filter: 10184
+                                   Buffers: shared hit=17463, temp read=1452 written=3107
+                                   ->  HashAggregate  (cost=3794.43..4406.79 rows=61236 width=11) (actual time=82.623..105.022 rows=91632 loops=9)
+                                         Group Key: incoming_payment_document_3.contract_number
+                                         Batches: 37  Memory Usage: 8241kB  Disk Usage: 3624kB
+                                         Buffers: shared hit=8743, temp read=1452 written=3107
+                                         ->  Index Only Scan using idx_ipd on incoming_payment_document incoming_payment_document_3  (cost=0.43..3294.43 rows=100000 width=11) (actual time=0.023..23.448 rows=252875 loops=9)
+                                               Index Cond: (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date)
+                                               Heap Fetches: 0
+                                               Buffers: shared hit=8743
+                                   ->  Hash  (cost=2033.42..2033.42 rows=33333 width=11) (actual time=24.482..24.483 rows=84330 loops=9)
+                                         Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5224kB
+                                         Buffers: shared hit=8720
+                                         ->  Bitmap Heap Scan on contract cnt_3  (cost=630.76..2033.42 rows=33333 width=11) (actual time=4.336..14.454 rows=84330 loops=9)
+                                               Recheck Cond: (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date)
+                                               Heap Blocks: exact=6624
+                                               Buffers: shared hit=8720
+                                               ->  Bitmap Index Scan on idx_contract  (cost=0.00..622.42 rows=33333 width=0) (actual time=4.258..4.258 rows=84330 loops=9)
+                                                     Index Cond: (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date)
+                                                     Buffers: shared hit=2096
+         SubPlan 11
+           ->  Aggregate  (cost=58.18..58.19 rows=1 width=4) (actual time=1.769..1.770 rows=1 loops=9)
+                 Buffers: shared hit=448
+                 ->  Index Only Scan using idx_ipd on incoming_payment_document ipd  (cost=0.43..54.43 rows=1500 width=4) (actual time=0.025..1.102 rows=12174 loops=9)
+                       Index Cond: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Heap Fetches: 0
+                       Buffers: shared hit=448
+         SubPlan 12
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=4) (actual time=10.985..10.985 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document opd  (cost=0.00..3084.00 rows=500 width=4) (actual time=0.013..10.690 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+ Planning:
+   Buffers: shared hit=458 read=1
+ Planning Time: 2.881 ms
+ Execution Time: 4363.856 ms
+(166 rows)
+

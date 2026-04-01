@@ -1,0 +1,86 @@
+                                                                                        QUERY PLAN                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on da  (cost=13543.49..20377582.85 rows=14944 width=288) (actual time=147.600..1471.198 rows=257 loops=1)
+   Buffers: shared hit=4122, temp read=141874 written=1075
+   CTE temp
+     ->  WindowAgg  (cost=2853.22..7037.57 rows=44832 width=111) (actual time=36.902..100.595 rows=45113 loops=1)
+           Buffers: shared hit=1474
+           ->  Merge Left Join  (cost=2852.96..6140.93 rows=44832 width=71) (actual time=36.854..75.527 rows=45113 loops=1)
+                 Merge Cond: (((pd.contract_number)::text = (dp.contract_number)::text) AND ((pd.plan_step)::text = (dp.plan_step)::text))
+                 Buffers: shared hit=1474
+                 ->  Merge Join  (cost=2852.68..5668.78 rows=44832 width=76) (actual time=36.830..64.472 rows=44832 loops=1)
+                       Merge Cond: ((pd.contract_number)::text = (cnt.contract_number)::text)
+                       Buffers: shared hit=1447
+                       ->  Index Scan using plan_detailed_pkey on plan_detailed pd  (cost=0.29..2031.83 rows=44832 width=13) (actual time=0.014..7.056 rows=44832 loops=1)
+                             Buffers: shared hit=459
+                       ->  Sort  (cost=2852.39..2877.39 rows=10000 width=63) (actual time=36.804..39.379 rows=44831 loops=1)
+                             Sort Key: cnt.contract_number
+                             Sort Method: quicksort  Memory: 1194kB
+                             Buffers: shared hit=988
+                             ->  Hash Join  (cost=299.00..2188.00 rows=10000 width=63) (actual time=3.124..16.731 rows=10000 loops=1)
+                                   Hash Cond: (d.debtor_id = cnt.debtor_id)
+                                   Buffers: shared hit=988
+                                   ->  Seq Scan on debtor d  (cost=0.00..1414.00 rows=50000 width=52) (actual time=0.008..4.407 rows=50000 loops=1)
+                                         Buffers: shared hit=914
+                                   ->  Hash  (cost=174.00..174.00 rows=10000 width=15) (actual time=3.011..3.034 rows=10000 loops=1)
+                                         Buckets: 16384  Batches: 1  Memory Usage: 597kB
+                                         Buffers: shared hit=74
+                                         ->  Seq Scan on contract cnt  (cost=0.00..174.00 rows=10000 width=15) (actual time=0.005..1.366 rows=10000 loops=1)
+                                               Buffers: shared hit=74
+                 ->  Index Only Scan using debt_payment_pkey on debt_payment dp  (cost=0.28..183.28 rows=5000 width=13) (actual time=0.018..0.637 rows=5000 loops=1)
+                       Heap Fetches: 0
+                       Buffers: shared hit=27
+   ->  GroupAggregate  (cost=6505.91..10353.99 rows=14944 width=128) (actual time=141.879..166.163 rows=257 loops=1)
+         Group Key: temp.debtor_id, temp.full_name
+         Filter: (count(CASE WHEN ((temp.status = 'unpaid'::text) AND (temp.date < CURRENT_DATE)) THEN 1 ELSE NULL::integer END) > 3)
+         Rows Removed by Filter: 8823
+         Buffers: shared hit=1477, temp read=524 written=1074
+         ->  Sort  (cost=6505.91..6617.99 rows=44832 width=88) (actual time=141.788..146.643 rows=45113 loops=1)
+               Sort Key: temp.debtor_id, temp.full_name
+               Sort Method: external merge  Disk: 4192kB
+               Buffers: shared hit=1477, temp read=524 written=1074
+               ->  CTE Scan on temp  (cost=0.00..896.64 rows=44832 width=88) (actual time=36.907..120.383 rows=45113 loops=1)
+                     Buffers: shared hit=1474, temp written=549
+   SubPlan 2
+     ->  Limit  (cost=1344.98..1344.98 rows=1 width=12) (actual time=5.034..5.034 rows=1 loops=257)
+           Buffers: shared hit=3, temp read=141350 written=1
+           ->  Sort  (cost=1344.98..1344.98 rows=1 width=12) (actual time=5.032..5.032 rows=1 loops=257)
+                 Sort Key: temp_1.date
+                 Sort Method: top-N heapsort  Memory: 25kB
+                 Buffers: shared hit=3, temp read=141350 written=1
+                 ->  CTE Scan on temp temp_1  (cost=0.00..1344.97 rows=1 width=12) (actual time=2.044..5.028 rows=4 loops=257)
+                       Filter: ((debtor_id = da.debtor_id) AND (status = 'unpaid'::text) AND (date < CURRENT_DATE))
+                       Rows Removed by Filter: 45109
+                       Buffers: temp read=141350 written=1
+   SubPlan 3
+     ->  Aggregate  (cost=8.68..8.69 rows=1 width=4) (actual time=0.023..0.023 rows=1 loops=257)
+           Buffers: shared hit=1321
+           ->  Nested Loop Left Join  (cost=0.57..8.67 rows=3 width=4) (actual time=0.015..0.020 rows=5 loops=257)
+                 Buffers: shared hit=1321
+                 ->  Index Only Scan using idx_contract_debtor_number on contract cnt_1  (cost=0.29..4.30 rows=1 width=7) (actual time=0.006..0.006 rows=2 loops=257)
+                       Index Cond: (debtor_id = da.debtor_id)
+                       Heap Fetches: 0
+                       Buffers: shared hit=515
+                 ->  Index Only Scan using idx_incoming_payment_covering on incoming_payment_document ipd  (cost=0.29..4.34 rows=3 width=11) (actual time=0.007..0.007 rows=3 loops=401)
+                       Index Cond: (contract_number = (cnt_1.contract_number)::text)
+                       Heap Fetches: 0
+                       Buffers: shared hit=806
+   SubPlan 4
+     ->  Aggregate  (cost=8.68..8.69 rows=1 width=4) (actual time=0.008..0.008 rows=1 loops=257)
+           Buffers: shared hit=1321
+           ->  Nested Loop Left Join  (cost=0.57..8.67 rows=3 width=4) (actual time=0.004..0.007 rows=5 loops=257)
+                 Buffers: shared hit=1321
+                 ->  Index Only Scan using idx_contract_debtor_number on contract cnt_2  (cost=0.29..4.30 rows=1 width=7) (actual time=0.001..0.001 rows=2 loops=257)
+                       Index Cond: (debtor_id = da.debtor_id)
+                       Heap Fetches: 0
+                       Buffers: shared hit=515
+                 ->  Index Only Scan using idx_incoming_payment_covering on incoming_payment_document ipd_1  (cost=0.29..4.34 rows=3 width=11) (actual time=0.003..0.003 rows=3 loops=401)
+                       Index Cond: (contract_number = (cnt_2.contract_number)::text)
+                       Heap Fetches: 0
+                       Buffers: shared hit=806
+ Planning:
+   Buffers: shared hit=377 read=1 dirtied=5
+ Planning Time: 3.374 ms
+ Execution Time: 1474.394 ms
+(82 rows)
+

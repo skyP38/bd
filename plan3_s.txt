@@ -1,0 +1,163 @@
+                                                                                                QUERY PLAN                                                                                                
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=74500325.25..74500327.75 rows=1000 width=92) (actual time=6041.389..6041.430 rows=9 loops=1)
+   Sort Key: months.month_start
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=164549 read=910, temp read=2016 written=4216
+   ->  Subquery Scan on months  (cost=0.00..74500275.42 rows=1000 width=92) (actual time=723.229..6041.322 rows=9 loops=1)
+         Buffers: shared hit=164546 read=910, temp read=2016 written=4216
+         ->  Result  (cost=0.00..45.04 rows=1000 width=4) (actual time=0.404..0.473 rows=9 loops=1)
+               ->  ProjectSet  (cost=0.00..5.04 rows=1000 width=8) (actual time=0.403..0.459 rows=9 loops=1)
+                     ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.002..0.003 rows=1 loops=1)
+         SubPlan 1
+           ->  Aggregate  (cost=11997.31..11997.32 rows=1 width=4) (actual time=211.980..211.981 rows=1 loops=9)
+                 Buffers: shared hit=28646 read=910, temp read=845 written=1805
+                 ->  Hash Join  (cost=10088.03..11969.38 rows=5585 width=8) (actual time=189.367..209.551 rows=35691 loops=9)
+                       Hash Cond: ((pp.contract_number)::text = (cnt.contract_number)::text)
+                       Buffers: shared hit=28646 read=910, temp read=845 written=1805
+                       ->  Seq Scan on payment_plan pp  (cost=0.00..1637.00 rows=50267 width=7) (actual time=0.016..8.451 rows=50123 loops=9)
+                             Filter: (NOT paid_flag)
+                             Rows Removed by Filter: 49877
+                             Buffers: shared hit=5733
+                       ->  Hash  (cost=9949.14..9949.14 rows=11111 width=15) (actual time=189.305..189.305 rows=71070 loops=9)
+                             Buckets: 131072 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 4912kB
+                             Buffers: shared hit=22913 read=910, temp read=845 written=1805
+                             ->  Hash Right Join  (cost=8563.66..9949.14 rows=11111 width=15) (actual time=118.826..178.982 rows=71070 loops=9)
+                                   Hash Cond: ((incoming_payment_document.contract_number)::text = (cnt.contract_number)::text)
+                                   Filter: ((cnt.debt_amount - COALESCE((sum(incoming_payment_document.amount)), '0'::real)) > '0'::double precision)
+                                   Rows Removed by Filter: 9225
+                                   Buffers: shared hit=22913 read=910, temp read=845 written=1805
+                                   ->  HashAggregate  (cost=6161.00..6773.36 rows=61236 width=11) (actual time=97.932..117.955 rows=90511 loops=9)
+                                         Group Key: incoming_payment_document.contract_number
+                                         Batches: 37  Memory Usage: 8241kB  Disk Usage: 1720kB
+                                         Buffers: shared hit=16289 read=910, temp read=845 written=1805
+                                         ->  Seq Scan on incoming_payment_document  (cost=0.00..5661.00 rows=100000 width=11) (actual time=0.010..31.235 rows=240701 loops=9)
+                                               Filter: (payment_date < months.month_start)
+                                               Rows Removed by Filter: 59299
+                                               Buffers: shared hit=16289 read=910
+                                   ->  Hash  (cost=1986.00..1986.00 rows=33333 width=11) (actual time=20.058..20.058 rows=80295 loops=9)
+                                         Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5088kB
+                                         Buffers: shared hit=6624
+                                         ->  Seq Scan on contract cnt  (cost=0.00..1986.00 rows=33333 width=11) (actual time=0.006..10.323 rows=80295 loops=9)
+                                               Filter: (date < months.month_start)
+                                               Rows Removed by Filter: 19705
+                                               Buffers: shared hit=6624
+         SubPlan 2
+           ->  Aggregate  (cost=4211.66..4211.67 rows=1 width=4) (actual time=39.096..39.097 rows=1 loops=9)
+                 Buffers: shared hit=12357
+                 ->  Hash Join  (cost=2402.66..4170.21 rows=16578 width=4) (actual time=19.553..36.743 rows=39987 loops=9)
+                       Hash Cond: ((pp_1.contract_number)::text = (cnt_1.contract_number)::text)
+                       Buffers: shared hit=12357
+                       ->  Seq Scan on payment_plan pp_1  (cost=0.00..1637.00 rows=49733 width=7) (actual time=0.006..8.148 rows=49877 loops=9)
+                             Filter: paid_flag
+                             Rows Removed by Filter: 50123
+                             Buffers: shared hit=5733
+                       ->  Hash  (cost=1986.00..1986.00 rows=33333 width=11) (actual time=19.423..19.423 rows=80295 loops=9)
+                             Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5088kB
+                             Buffers: shared hit=6624
+                             ->  Seq Scan on contract cnt_1  (cost=0.00..1986.00 rows=33333 width=11) (actual time=0.007..9.933 rows=80295 loops=9)
+                                   Filter: (date < months.month_start)
+                                   Rows Removed by Filter: 19705
+                                   Buffers: shared hit=6624
+         SubPlan 3
+           ->  Aggregate  (cost=2069.33..2069.34 rows=1 width=4) (actual time=13.580..13.580 rows=1 loops=9)
+                 Buffers: shared hit=6624
+                 ->  Seq Scan on contract cnt_2  (cost=0.00..1986.00 rows=33333 width=4) (actual time=0.005..9.211 rows=80295 loops=9)
+                       Filter: (date < months.month_start)
+                       Rows Removed by Filter: 19705
+                       Buffers: shared hit=6624
+         SubPlan 4
+           ->  Aggregate  (cost=2987.25..2987.26 rows=1 width=8) (actual time=9.872..9.872 rows=1 loops=9)
+                 Buffers: shared hit=6624
+                 ->  Seq Scan on contract  (cost=0.00..2986.00 rows=500 width=0) (actual time=0.010..9.667 rows=4035 loops=9)
+                       Filter: ((date >= months.month_start) AND (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95965
+                       Buffers: shared hit=6624
+         SubPlan 5
+           ->  Aggregate  (cost=2987.25..2987.26 rows=1 width=4) (actual time=9.790..9.790 rows=1 loops=9)
+                 Buffers: shared hit=6624
+                 ->  Seq Scan on contract contract_1  (cost=0.00..2986.00 rows=500 width=4) (actual time=0.007..9.551 rows=4035 loops=9)
+                       Filter: ((date >= months.month_start) AND (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95965
+                       Buffers: shared hit=6624
+         SubPlan 6
+           ->  Aggregate  (cost=8664.75..8664.76 rows=1 width=8) (actual time=28.315..28.316 rows=1 loops=9)
+                 Buffers: shared hit=17199
+                 ->  Seq Scan on incoming_payment_document incoming_payment_document_1  (cost=0.00..8661.00 rows=1500 width=0) (actual time=0.009..27.705 rows=12174 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 287826
+                       Buffers: shared hit=17199
+         SubPlan 7
+           ->  Aggregate  (cost=8664.75..8664.76 rows=1 width=4) (actual time=28.134..28.134 rows=1 loops=9)
+                 Buffers: shared hit=17199
+                 ->  Seq Scan on incoming_payment_document incoming_payment_document_2  (cost=0.00..8661.00 rows=1500 width=4) (actual time=0.007..27.429 rows=12174 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 287826
+                       Buffers: shared hit=17199
+         SubPlan 8
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=8) (actual time=10.761..10.761 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document  (cost=0.00..3084.00 rows=500 width=0) (actual time=0.008..10.546 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+         SubPlan 9
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=4) (actual time=10.893..10.893 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document outgoing_payment_document_1  (cost=0.00..3084.00 rows=500 width=4) (actual time=0.006..10.600 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+         SubPlan 10
+           ->  Aggregate  (cost=14997.31..14997.32 rows=1 width=4) (actual time=269.231..269.232 rows=1 loops=9)
+                 Buffers: shared hit=29556, temp read=1171 written=2411
+                 ->  Hash Join  (cost=13088.03..14969.38 rows=5585 width=8) (actual time=247.175..266.810 rows=37227 loops=9)
+                       Hash Cond: ((pp_2.contract_number)::text = (cnt_3.contract_number)::text)
+                       Buffers: shared hit=29556, temp read=1171 written=2411
+                       ->  Seq Scan on payment_plan pp_2  (cost=0.00..1637.00 rows=50267 width=7) (actual time=0.015..8.239 rows=50123 loops=9)
+                             Filter: (NOT paid_flag)
+                             Rows Removed by Filter: 49877
+                             Buffers: shared hit=5733
+                       ->  Hash  (cost=12949.14..12949.14 rows=11111 width=15) (actual time=247.116..247.116 rows=74146 loops=9)
+                             Buckets: 131072 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 5022kB
+                             Buffers: shared hit=23823, temp read=1171 written=2411
+                             ->  Hash Right Join  (cost=11563.66..12949.14 rows=11111 width=15) (actual time=175.015..236.821 rows=74146 loops=9)
+                                   Hash Cond: ((incoming_payment_document_3.contract_number)::text = (cnt_3.contract_number)::text)
+                                   Filter: ((cnt_3.debt_amount - COALESCE((sum(incoming_payment_document_3.amount)), '0'::real)) > '0'::double precision)
+                                   Rows Removed by Filter: 10184
+                                   Buffers: shared hit=23823, temp read=1171 written=2411
+                                   ->  HashAggregate  (cost=8411.00..9023.36 rows=61236 width=11) (actual time=139.639..160.698 rows=91632 loops=9)
+                                         Group Key: incoming_payment_document_3.contract_number
+                                         Batches: 37  Memory Usage: 8241kB  Disk Usage: 3600kB
+                                         Buffers: shared hit=17199, temp read=1171 written=2411
+                                         ->  Seq Scan on incoming_payment_document incoming_payment_document_3  (cost=0.00..7911.00 rows=100000 width=11) (actual time=0.010..71.443 rows=252875 loops=9)
+                                               Filter: (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date)
+                                               Rows Removed by Filter: 47125
+                                               Buffers: shared hit=17199
+                                   ->  Hash  (cost=2736.00..2736.00 rows=33333 width=11) (actual time=34.561..34.561 rows=84330 loops=9)
+                                         Buckets: 131072 (originally 65536)  Batches: 1 (originally 1)  Memory Usage: 5224kB
+                                         Buffers: shared hit=6624
+                                         ->  Seq Scan on contract cnt_3  (cost=0.00..2736.00 rows=33333 width=11) (actual time=0.006..24.389 rows=84330 loops=9)
+                                               Filter: (date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date)
+                                               Rows Removed by Filter: 15670
+                                               Buffers: shared hit=6624
+         SubPlan 11
+           ->  Aggregate  (cost=8664.75..8664.76 rows=1 width=4) (actual time=28.529..28.529 rows=1 loops=9)
+                 Buffers: shared hit=17199
+                 ->  Seq Scan on incoming_payment_document ipd  (cost=0.00..8661.00 rows=1500 width=4) (actual time=0.013..27.809 rows=12174 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 287826
+                       Buffers: shared hit=17199
+         SubPlan 12
+           ->  Aggregate  (cost=3085.25..3085.26 rows=1 width=4) (actual time=10.912..10.912 rows=1 loops=9)
+                 Buffers: shared hit=7506
+                 ->  Seq Scan on outgoing_payment_document opd  (cost=0.00..3084.00 rows=500 width=4) (actual time=0.009..10.617 rows=4083 loops=9)
+                       Filter: ((payment_date >= months.month_start) AND (payment_date <= (((months.month_start + '1 mon'::interval) - '1 day'::interval))::date))
+                       Rows Removed by Filter: 95917
+                       Buffers: shared hit=7506
+ Planning:
+   Buffers: shared hit=404 dirtied=1
+ Planning Time: 2.463 ms
+ Execution Time: 6048.919 ms
+(159 rows)
+
