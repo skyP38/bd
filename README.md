@@ -57,10 +57,11 @@ select proname, pronamespace::regnamespace from pg_proc where prokind='p';
 ## Удалить все таблицы и объекты
 ```bash
 sudo -u postgres psql -d mydb -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO myuser; GRANT ALL ON SCHEMA public TO public;"
-``
+```
 
 ## Снять план запроса
 ``` bash
 psql -U myuser -d mydb -c "EXPLAIN (ANALYZE, BUFFERS) $(cat q4.sql)" > plan4_30_03.txt
 psql -U myuser -d mydb -c "EXPLAIN (ANALYZE, BUFFERS) $(cat q4.sql)" > plan4_30_03_1.txt
 ```
+
